@@ -192,6 +192,17 @@ exports.getCertificates = async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: 'Server error.' }); }
 };
 
+
+// ── DELETE /api/admin/applications/:id ───────────────────────
+exports.deleteApplication = async (req, res) => {
+  try {
+    const app = await Application.findByIdAndDelete(req.params.id);
+    if (!app) return res.status(404).json({ success: false, message: 'Not found.' });
+    console.log(`[ADMIN] Application deleted: ${app._id} by ${req.admin?.email}`);
+    res.json({ success: true, message: 'Application deleted.' });
+  } catch (e) { res.status(500).json({ success: false, message: 'Server error.' }); }
+};
+
 // ── POST /api/admin/certificates ─────────────────────────────
 exports.createCertificate = async (req, res) => {
   try {

@@ -21,6 +21,7 @@ router.get('/stats', c.getStats);
 router.get('/applications',              c.getApplications);
 router.get('/applications/:id',          c.getApplication);
 router.patch('/applications/:id/status', c.updateApplicationStatus);
+router.delete('/applications/:id',        c.deleteApplication);
 router.get('/certificates',              c.getCertificates);
 router.post('/certificates',             c.createCertificate);
 router.patch('/certificates/:id',        c.updateCertificate);
