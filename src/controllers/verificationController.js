@@ -24,7 +24,18 @@ exports.verifyCertificate = async (req, res) => {
       });
     }
 
-    // Build safe public response (never expose internal IDs or admin info)
+    // ── Auto-update status based on expiry date ───────────────
+    // If the certificate has an expiry date that has passed AND
+    // it is currently marked as active — automatically mark it expired
+    const now = new Date();
+    let effectiveStatus = cert.status;
+
+    if (cert.status === 'active' && cert.expiryDate && new Date(cert.expiryDate) < now) {
+      effectiveStatus = 'expired';
+      // Update in database so admin sees correct status too
+      await Certificate.findByIdAndUpdate(cert._id, { status: 'expired' });
+    }
+
     const result = {
       success:           true,
       found:             true,
@@ -35,7 +46,7 @@ exports.verifyCertificate = async (req, res) => {
       certificationCode: cert.certificationCode,
       issueDate:         cert.issueDate,
       expiryDate:        cert.expiryDate || null,
-      status:            cert.status,
+      status:            effectiveStatus,
       holderPhoto:       cert.holderPhoto || null,
     };
 

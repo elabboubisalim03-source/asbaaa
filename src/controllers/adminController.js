@@ -78,6 +78,14 @@ exports.logout = (req, res) => {
 
 // ── GET /api/admin/stats ─────────────────────────────────────
 exports.getStats = async (req, res) => {
+  // Auto-expire any certificates whose expiry date has passed
+  try {
+    await Certificate.updateMany(
+      { status: 'active', expiryDate: { $lt: new Date() } },
+      { $set: { status: 'expired' } }
+    );
+  } catch(e) { /* non-critical — continue */ }
+
   try {
     const [total, pending, reviewing, approved, rejected, totalC, activeC] = await Promise.all([
       Application.countDocuments(),
@@ -147,6 +155,14 @@ exports.updateApplicationStatus = async (req, res) => {
 
 // ── GET /api/admin/certificates ──────────────────────────────
 exports.getCertificates = async (req, res) => {
+  // Auto-expire any past-expiry certificates
+  try {
+    await Certificate.updateMany(
+      { status: 'active', expiryDate: { $lt: new Date() } },
+      { $set: { status: 'expired' } }
+    );
+  } catch(e) { /* non-critical */ }
+
   try {
     const { status, page = 1, limit = 20, search } = req.query;
     const filter = {};
