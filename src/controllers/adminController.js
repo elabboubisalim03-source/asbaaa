@@ -167,7 +167,7 @@ exports.getCertificates = async (req, res) => {
 // ── POST /api/admin/certificates ─────────────────────────────
 exports.createCertificate = async (req, res) => {
   try {
-    const { certificateId, holderName, holderEmail, country, certificationName, certificationCode, issueDate, expiryDate, applicationRef } = req.body;
+    const { certificateId, holderName, holderEmail, holderPhoto, country, certificationName, certificationCode, issueDate, expiryDate, applicationRef } = req.body;
     if (!certificateId || !holderName || !certificationName || !issueDate) {
       return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
@@ -175,7 +175,7 @@ exports.createCertificate = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Certificate ID already exists.' });
     }
     const cert = await Certificate.create({
-      certificateId: certificateId.toUpperCase(), holderName, holderEmail, country,
+      certificateId: certificateId.toUpperCase(), holderName, holderEmail, holderPhoto: holderPhoto || null, country,
       certificationName, certificationCode,
       issueDate: new Date(issueDate),
       expiryDate: expiryDate ? new Date(expiryDate) : null,

@@ -36,6 +36,7 @@ exports.verifyCertificate = async (req, res) => {
       issueDate:         cert.issueDate,
       expiryDate:        cert.expiryDate || null,
       status:            cert.status,
+      holderPhoto:       cert.holderPhoto || null,
     };
 
     res.status(200).json(result);

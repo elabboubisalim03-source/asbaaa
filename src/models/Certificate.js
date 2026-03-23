@@ -14,6 +14,8 @@ const certificateSchema = new mongoose.Schema(
     // Certificate holder info
     holderName:       { type: String, required: true, trim: true },
     holderEmail:      { type: String, trim: true, lowercase: true },
+    holderPhoto:      { type: String, default: null }, // base64 or URL
+    holderPhoto:      { type: String, trim: true }, // base64 or URL
     country:          { type: String, trim: true },
 
     // What was certified
