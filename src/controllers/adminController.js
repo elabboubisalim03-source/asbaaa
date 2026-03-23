@@ -78,11 +78,18 @@ exports.logout = (req, res) => {
 
 // ── GET /api/admin/stats ─────────────────────────────────────
 exports.getStats = async (req, res) => {
-  // Auto-expire any certificates whose expiry date has passed
+  // Auto-sync certificate status based on expiry dates
   try {
+    const now = new Date();
+    // Expire active certs whose expiry date has passed
     await Certificate.updateMany(
-      { status: 'active', expiryDate: { $lt: new Date() } },
+      { status: 'active', expiryDate: { $exists: true, $ne: null, $lt: now } },
       { $set: { status: 'expired' } }
+    );
+    // Reactivate expired certs whose expiry date has been extended into the future
+    await Certificate.updateMany(
+      { status: 'expired', expiryDate: { $exists: true, $ne: null, $gte: now } },
+      { $set: { status: 'active' } }
     );
   } catch(e) { /* non-critical — continue */ }
 
@@ -155,11 +162,16 @@ exports.updateApplicationStatus = async (req, res) => {
 
 // ── GET /api/admin/certificates ──────────────────────────────
 exports.getCertificates = async (req, res) => {
-  // Auto-expire any past-expiry certificates
+  // Auto-sync certificate status based on expiry dates
   try {
+    const now = new Date();
     await Certificate.updateMany(
-      { status: 'active', expiryDate: { $lt: new Date() } },
+      { status: 'active', expiryDate: { $exists: true, $ne: null, $lt: now } },
       { $set: { status: 'expired' } }
+    );
+    await Certificate.updateMany(
+      { status: 'expired', expiryDate: { $exists: true, $ne: null, $gte: now } },
+      { $set: { status: 'active' } }
     );
   } catch(e) { /* non-critical */ }
 
@@ -205,7 +217,31 @@ exports.createCertificate = async (req, res) => {
 // ── PATCH /api/admin/certificates/:id ────────────────────────
 exports.updateCertificate = async (req, res) => {
   try {
-    const cert = await Certificate.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const update = { ...req.body };
+    const now    = new Date();
+
+    // Auto-calculate status from dates unless admin explicitly sets revoked
+    // Rule:
+    //   - If admin sets status = 'revoked' → keep revoked (manual override)
+    //   - If expiryDate is set and is in the past → expired
+    //   - If expiryDate is set and is in the future (or no expiry) → active
+    if (update.status !== 'revoked') {
+      const expiryDate = update.expiryDate
+        ? new Date(update.expiryDate)
+        : null;
+
+      if (expiryDate && expiryDate < now) {
+        update.status = 'expired';
+      } else {
+        update.status = 'active';
+      }
+    }
+
+    const cert = await Certificate.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true, runValidators: true }
+    );
     if (!cert) return res.status(404).json({ success: false, message: 'Not found.' });
     res.json({ success: true, data: cert });
   } catch (e) { res.status(500).json({ success: false, message: 'Server error.' }); }
