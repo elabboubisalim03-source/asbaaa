@@ -68,7 +68,10 @@ app.use(rateLimit({
   message: { success: false, message: 'Too many requests. Try again later.' },
 }));
 
-// Body parser
+// Body parser — certificate routes allow larger body for base64 photos
+app.use('/api/admin/certificates', express.json({ limit: '3mb' }));
+app.use('/api/admin/certificates', express.urlencoded({ extended: false, limit: '3mb' }));
+// All other routes strict 10kb
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(cookieParser());
