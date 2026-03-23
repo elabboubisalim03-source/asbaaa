@@ -79,9 +79,10 @@ exports.logout = (req, res) => {
 // ── GET /api/admin/stats ─────────────────────────────────────
 exports.getStats = async (req, res) => {
   try {
-    const [total, pending, approved, rejected, totalC, activeC] = await Promise.all([
+    const [total, pending, reviewing, approved, rejected, totalC, activeC] = await Promise.all([
       Application.countDocuments(),
       Application.countDocuments({ status: 'pending' }),
+      Application.countDocuments({ status: 'reviewing' }),
       Application.countDocuments({ status: 'approved' }),
       Application.countDocuments({ status: 'rejected' }),
       Certificate.countDocuments(),
@@ -90,7 +91,7 @@ exports.getStats = async (req, res) => {
     const recent = await Application.find().sort({ createdAt: -1 }).limit(5)
       .select('type status email country createdAt');
     res.json({ success: true,
-      stats: { applications: { total, pending, approved, rejected }, certificates: { total: totalC, active: activeC } },
+      stats: { applications: { total, pending, reviewing, approved, rejected }, certificates: { total: totalC, active: activeC } },
       recentApplications: recent });
   } catch (e) { res.status(500).json({ success: false, message: 'Server error.' }); }
 };
